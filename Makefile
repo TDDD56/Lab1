@@ -1,57 +1,45 @@
-##
-## Makefile
-##
-##  Created on: 5 Sep 2011
-##  Copyright 2011 Nicolas Melot
-##
-## This file is part of TDDD56.
-## 
-##     TDDD56 is free software: you can redistribute it and/or modify
-##     it under the terms of the GNU General Public License as published by
-##     the Free Software Foundation, either version 3 of the License, or
-##     (at your option) any later version.
-## 
-##     TDDD56 is distributed in the hope that it will be useful,
-##     but WITHOUT ANY WARRANTY; without even the implied warranty of
-##     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-##     GNU General Public License for more details.
-## 
-##     You should have received a copy of the GNU General Public License
-##     along with TDDD56. If not, see <http://www.gnu.org/licenses/>.
-## 
-##
+FILES=Makefile Questions/questions.pdf mandelbrot.c mandelbrot_main.c ppm.c ppm.h ppm_test.c gl_mandelbrot.c gl_mandelbrot.h mandelbrot_main.c mandelbrot.h compile COPYING.html run variables drawplots.r
+ARCHIVE=Lab1.zip
 
-FILES=hello_world.c var_printf.c function_header.c module.c pthread.c Makefile
-ARCHIVE=Lab0a.zip
+# Suggested list of features to tune to measure performance
+MAXITER=256
+WIDTH=500
+HEIGHT=375
+LOWER_R=-2
+UPPER_R=0.6
+LOWER_I=-1
+UPPER_I=1
+NB_THREADS=0
+LOADBALANCE=0
+MANDELBROT_COLOR=0
+GLUT=0
 
-CC=gcc
-CFLAGS=-g -O0 -Wall
+MEASURE_FLAG=$(if $(MEASURE),-DMEASURE,)
+DEBUG_FLAG=$(if $(DEBUG),-DDEBUG,)
+## -O3 -msse2 -mfpmath=sse -ftree-vectorize -funroll-loops
+CFLAGS= -g -O0 -Wall -DMAXITER=$(MAXITER) -DWIDTH=$(WIDTH) -DHEIGHT=$(HEIGHT) -DLOWER_R=$(LOWER_R) -DUPPER_R=$(UPPER_R) -DLOWER_I=$(LOWER_I) -DUPPER_I=$(UPPER_I) -DNB_THREADS=$(NB_THREADS) -DLOADBALANCE=$(LOADBALANCE) $(MEASURE_FLAG) $(DEBUG_FLAG) -DMANDELBROT_COLOR=$(MANDELBROT_COLOR) -DGLUT=$(GLUT)
+## Enable this CFLAG if you want to go faster
+#CFLAGS= -O3 -msse2 -mfpmath=sse -ftree-vectorize -funroll-loops  -Wall -DMAXITER=$(MAXITER) -DWIDTH=$(WIDTH) -DHEIGHT=$(HEIGHT) -DLOWER_R=$(LOWER_R) -DUPPER_R=$(UPPER_R) -DLOWER_I=$(LOWER_I) -DUPPER_I=$(UPPER_I) -DNB_THREADS=$(NB_THREADS) -DLOADBALANCE=$(LOADBALANCE) $(MEASURE_FLAG) $(DEBUG_FLAG) -DMANDELBROT_COLOR=$(MANDELBROT_COLOR) -DGLUT=$(GLUT)
+LDFLAGS=-lrt -lGL -lGLU -lglut -lpthread -lm
 
-all: hello_world var_printf function_header pthread
+all: mandelbrot-$(MAXITER)-$(WIDTH)-$(HEIGHT)-$(LOWER_R)-$(UPPER_R)-$(LOWER_I)-$(UPPER_I)-$(NB_THREADS)-$(LOADBALANCE)
 
 clean:
-	$(RM) hello_world
-	$(RM) var_printf
-	$(RM) pthread
-	$(RM) function_header
+	$(RM) mandelbrot-*
+	$(RM) mandelbrot
 	$(RM) *.o
-	$(RM) *.zip
 
-hello_world: hello_world.c
-	$(CC) $(CFLAGS) -o hello_world hello_world.c
+mandelbrot-$(MAXITER)-$(WIDTH)-$(HEIGHT)-$(LOWER_R)-$(UPPER_R)-$(LOWER_I)-$(UPPER_I)-$(NB_THREADS)-$(LOADBALANCE): mandelbrot_main.c mandelbrot-$(MAXITER)-$(WIDTH)-$(HEIGHT)-$(LOWER_R)-$(UPPER_R)-$(LOWER_I)-$(UPPER_I)-$(NB_THREADS)-$(LOADBALANCE).o ppm.o gl_mandelbrot.o
+	gcc $(CFLAGS) -o mandelbrot-$(MAXITER)-$(WIDTH)-$(HEIGHT)-$(LOWER_R)-$(UPPER_R)-$(LOWER_I)-$(UPPER_I)-$(NB_THREADS)-$(LOADBALANCE) mandelbrot-$(MAXITER)-$(WIDTH)-$(HEIGHT)-$(LOWER_R)-$(UPPER_R)-$(LOWER_I)-$(UPPER_I)-$(NB_THREADS)-$(LOADBALANCE).o ppm.o gl_mandelbrot.o mandelbrot_main.c $(LDFLAGS)
 
-var_printf: var_printf.c
-	$(CC) $(CFLAGS) -o var_printf var_printf.c
-
-function_header: function_header.c module.h module.c
-	$(CC) $(CFLAGS) -c -o module.o module.c
-	$(CC) $(CFLAGS) -c -o function_header.o function_header.c
-	$(CC) -o function_header module.o function_header.o
-
-pthread: pthread.c
-	$(CC) $(CFLAGS) -pthread -lm -o pthread pthread.c
+mandelbrot-$(MAXITER)-$(WIDTH)-$(HEIGHT)-$(LOWER_R)-$(UPPER_R)-$(LOWER_I)-$(UPPER_I)-$(NB_THREADS)-$(LOADBALANCE).o: mandelbrot.c
+	gcc $(CFLAGS) -c -o mandelbrot-$(MAXITER)-$(WIDTH)-$(HEIGHT)-$(LOWER_R)-$(UPPER_R)-$(LOWER_I)-$(UPPER_I)-$(NB_THREADS)-$(LOADBALANCE).o mandelbrot.c
 	
-.PHONY: all clean dist
+ppm.o: ppm.c
+	gcc $(CFLAGS) -c -o ppm.o ppm.c
+	
+gl_mandelbrot.o: gl_mandelbrot.c
+	gcc $(CFLAGS) -c -o gl_mandelbrot.o gl_mandelbrot.c
 
 dist:
 	zip $(ARCHIVE) $(FILES)
